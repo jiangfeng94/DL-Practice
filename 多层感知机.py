@@ -50,7 +50,7 @@ for i in range(3000):
     
 
 correct_prediction = tf.equal(tf.argmax(y,1),tf.argmax(y_,1))
-#cast(x, dtype, name=None)  将x的数据格式转化成dtype.
+#cast(x, dtype, name=None)    将x的数据格式转化成dtype.
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
 print(accuracy.eval({x:mnist.test.images,y_:mnist.test.labels,keep_prob:1.0}))
