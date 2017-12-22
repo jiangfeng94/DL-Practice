@@ -16,6 +16,8 @@ img_size =28 *28
 z_size =100
 h1_size =150
 h2_size =300
+learning_rate =0.0005
+momentum =0.9
 def build_generator(Z):
     w1 =tf.Variable(tf.truncated_normal([z_size,h1_size],stddev=0.1),name="g_w1",dtype=tf.float32)
     b1 =tf.Variable(tf.zeros([h1_size]),name="g_b1",dtype=tf.float32)
@@ -76,8 +78,13 @@ def train():
     d_loss = -tf.reduce_mean(tf.log(y_data) +tf.log(1-y_generated))
     g_loss = -tf.reduce_mean(tf.log(y_generated))
     
-    #Adam 优化
-    optimizer =tf.train.MomentumOptimizer(0.0005,0.9)
+    #momentum 优化
+    #optimizer =tf.train.MomentumOptimizer(learning_rate,momentum)
+    #SGD 优化
+    learning_rate=tf.train.exponential_decay(0.001,global_step,100,0.98,staircase=True)    
+    optimizer=tf.train.GradientDescentOptimizer(learning_rate)
+
+
     d_trainer = optimizer.minimize(d_loss, var_list=d_params)
     g_trainer = optimizer.minimize(g_loss, var_list=g_params)
     #初始化
@@ -94,15 +101,16 @@ def train():
             x_value = 2 * x_value.astype(np.float32) - 1
             z_value = np.random.normal(0, 1, size=(batch_size, z_size)).astype(np.float32)
             _,D_loss_curr=sess.run([d_trainer,d_loss],feed_dict ={x_data:x_value,Z:z_value,keep_prob: np.sum(0.7).astype(np.float32)})
-            _,G_loss_curr=sess.run([g_trainer,g_loss],feed_dict={x_data: x_value,Z:z_value,keep_prob: np.sum(0.7).astype(np.float32)})
-            if(j%15 ==0):            
-                print('Epoch :{} Iter: {} D_loss:{:0.4f} G_loss:{:0.4f}'.format(i,j,D_loss_curr,G_loss_curr))
-        sess.run(tf.assign(global_step, i + 1))
+            _,G_loss_curr=sess.run([g_trainer,g_loss],feed_dict={x_data: x_value,Z:z_value,keep_prob: np.sum(0.7).astype(np.float32)})         
+        print('Epoch :{}  D_loss:{:0.4f} G_loss:{:0.4f}'.format(i,D_loss_curr,G_loss_curr))
         x_gen_val = sess.run(x_generated, feed_dict={Z: z_sample_val})
-        show_result(x_gen_val, "out/sample{0}.jpg".format(i))
+        path ="output/optimizer{}".format("SGD_expenential_decay")
+        if not os.path.exists(path):
+            os.mkdir(path)
+        show_result(x_gen_val, "{}/{}-{:0.4f}.jpg".format(path,i,learning_rate))
         z_random_sample_val = np.random.normal(0, 1, size=(batch_size, z_size)).astype(np.float32)
         x_gen_val = sess.run(x_generated, feed_dict={Z: z_random_sample_val})
-        show_result(x_gen_val, "outrand/random_sample{0}.jpg".format(i))
+        #show_result(x_gen_val, "output/out_lr={}_momentum={}/random_sample{}.jpg".format(learning_rate,momentum,i))
         sess.run(tf.assign(global_step, i + 1))
 train()           
             
