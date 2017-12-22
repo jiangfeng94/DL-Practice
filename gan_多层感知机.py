@@ -107,7 +107,8 @@ def train():
         path ="output/optimizer{}".format("SGD_expenential_decay")
         if not os.path.exists(path):
             os.mkdir(path)
-        show_result(x_gen_val, "{}/{}-{:0.4f}.jpg".format(path,i,learning_rate))
+        print(learning_rate)
+        show_result(x_gen_val, "{}/{}-{}.jpg".format(path,i,learning_rate))
         z_random_sample_val = np.random.normal(0, 1, size=(batch_size, z_size)).astype(np.float32)
         x_gen_val = sess.run(x_generated, feed_dict={Z: z_random_sample_val})
         #show_result(x_gen_val, "output/out_lr={}_momentum={}/random_sample{}.jpg".format(learning_rate,momentum,i))
