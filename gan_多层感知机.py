@@ -83,6 +83,7 @@ def train():
     #SGD 优化
     learning_rate=tf.train.exponential_decay(0.001,global_step,100,0.98,staircase=True)    
     optimizer=tf.train.GradientDescentOptimizer(learning_rate)
+    
 
 
     d_trainer = optimizer.minimize(d_loss, var_list=d_params)
@@ -107,8 +108,7 @@ def train():
         path ="output/optimizer{}".format("SGD_expenential_decay")
         if not os.path.exists(path):
             os.mkdir(path)
-        print(learning_rate)
-        show_result(x_gen_val, "{}/{}-{}.jpg".format(path,i,learning_rate))
+        show_result(x_gen_val, "{}/{}_{:0.4f}.jpg".format(path,i,sess.run(learning_rate)))
         z_random_sample_val = np.random.normal(0, 1, size=(batch_size, z_size)).astype(np.float32)
         x_gen_val = sess.run(x_generated, feed_dict={Z: z_random_sample_val})
         #show_result(x_gen_val, "output/out_lr={}_momentum={}/random_sample{}.jpg".format(learning_rate,momentum,i))
