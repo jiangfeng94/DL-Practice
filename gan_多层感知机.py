@@ -16,8 +16,6 @@ img_size =28 *28
 z_size =100
 h1_size =150
 h2_size =300
-learning_rate =0.0005
-momentum =0.9
 def build_generator(Z):
     w1 =tf.Variable(tf.truncated_normal([z_size,h1_size],stddev=0.1),name="g_w1",dtype=tf.float32)
     b1 =tf.Variable(tf.zeros([h1_size]),name="g_b1",dtype=tf.float32)
@@ -66,6 +64,9 @@ def show_result(batch_res, fname, grid_size=(8, 8), grid_pad=5):
 
     
 def train():
+    OptimizerName ="Adagrad"
+    init_learning_rate =0.001   
+    
     mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
     x_data =tf.placeholder(tf.float32,[batch_size,img_size],name ="x_data")
     Z =tf.placeholder(tf.float32,[batch_size,z_size],name ="Z")
@@ -78,14 +79,22 @@ def train():
     d_loss = -tf.reduce_mean(tf.log(y_data) +tf.log(1-y_generated))
     g_loss = -tf.reduce_mean(tf.log(y_generated))
     
-    #momentum 优化
-    #optimizer =tf.train.MomentumOptimizer(learning_rate,momentum)
-    #SGD 优化
-    learning_rate=tf.train.exponential_decay(0.001,global_step,100,0.98,staircase=True)    
-    optimizer=tf.train.GradientDescentOptimizer(learning_rate)
     
 
-
+    if OptimizerName =="momentum":
+        momentum = 0.9
+        optimizer =tf.train.MomentumOptimizer(init_learning_rate,momentum)
+    elif OptimizerName == "Adam" :
+        optimizer=tf.train.AdamOptimizer(init_learning_rate=0.001, beta1=0.9, beta2=0.999)
+    elif OptimizerName =="SGD_expenential_decay_rl":
+        learning_rate=tf.train.exponential_decay(init_learning_rate,global_step,50,0.95,staircase=True)
+        optimizer=tf.train.GradientDescentOptimizer(learning_rate)
+    elif OptimizerName =="Adagrad":
+        optimizer =tf.train.AdagradOptimizer(init_learning_rate)
+    else: #如果都不是 就用SGD
+        optimizer=tf.train.GradientDescentOptimizer(init_learning_rate)
+            
+    
     d_trainer = optimizer.minimize(d_loss, var_list=d_params)
     g_trainer = optimizer.minimize(g_loss, var_list=g_params)
     #初始化
@@ -105,10 +114,12 @@ def train():
             _,G_loss_curr=sess.run([g_trainer,g_loss],feed_dict={x_data: x_value,Z:z_value,keep_prob: np.sum(0.7).astype(np.float32)})         
         print('Epoch :{}  D_loss:{:0.4f} G_loss:{:0.4f}'.format(i,D_loss_curr,G_loss_curr))
         x_gen_val = sess.run(x_generated, feed_dict={Z: z_sample_val})
-        path ="output/optimizer{}".format("SGD_expenential_decay")
+        path ="output/{}_{}".format(OptimizerName,init_learning_rate)
         if not os.path.exists(path):
             os.mkdir(path)
-        show_result(x_gen_val, "{}/{}_{:0.4f}.jpg".format(path,i,sess.run(learning_rate)))
+            print("makedir{}".format(path))
+        #show_result(x_gen_val, "{}/{}_{:0.5f}.jpg".format(path,i,sess.run(learning_rate)))
+        show_result(x_gen_val, "{}/{}.jpg".format(path,i))
         z_random_sample_val = np.random.normal(0, 1, size=(batch_size, z_size)).astype(np.float32)
         x_gen_val = sess.run(x_generated, feed_dict={Z: z_random_sample_val})
         #show_result(x_gen_val, "output/out_lr={}_momentum={}/random_sample{}.jpg".format(learning_rate,momentum,i))
