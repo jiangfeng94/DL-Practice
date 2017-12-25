@@ -64,8 +64,8 @@ def show_result(batch_res, fname, grid_size=(8, 8), grid_pad=5):
 
     
 def train():
-    OptimizerName ="Adagrad"
-    init_learning_rate =0.001   
+    OptimizerName ="SGD_expenential_decay_rl"
+    init_learning_rate =0.005   
     
     mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
     x_data =tf.placeholder(tf.float32,[batch_size,img_size],name ="x_data")
@@ -85,7 +85,8 @@ def train():
         momentum = 0.9
         optimizer =tf.train.MomentumOptimizer(init_learning_rate,momentum)
     elif OptimizerName == "Adam" :
-        optimizer=tf.train.AdamOptimizer(init_learning_rate=0.001, beta1=0.9, beta2=0.999)
+        optimizer=tf.train.AdamOptimizer(init_learning_rate, beta1=0.9, beta2=0.999)
+        
     elif OptimizerName =="SGD_expenential_decay_rl":
         learning_rate=tf.train.exponential_decay(init_learning_rate,global_step,50,0.95,staircase=True)
         optimizer=tf.train.GradientDescentOptimizer(learning_rate)
@@ -117,7 +118,7 @@ def train():
         path ="output/{}_{}".format(OptimizerName,init_learning_rate)
         if not os.path.exists(path):
             os.mkdir(path)
-            print("makedir{}".format(path))
+            print("makedir----->{}".format(path))
         #show_result(x_gen_val, "{}/{}_{:0.5f}.jpg".format(path,i,sess.run(learning_rate)))
         show_result(x_gen_val, "{}/{}.jpg".format(path,i))
         z_random_sample_val = np.random.normal(0, 1, size=(batch_size, z_size)).astype(np.float32)
